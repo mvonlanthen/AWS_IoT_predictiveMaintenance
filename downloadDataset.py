@@ -117,24 +117,44 @@ def readPrepareDataset(dataDir):
         's21'
     ]
 
+    # operation condition. Each batch (e.g. train_FD001.txt and test_FD001.txt 
+    # is one batch) represents a similar fleet of engine running at similar 
+    # operating conditions. These operation contidions are defined in the readme.txt 
+    # of the dataset. We summarize these conditions here
+    opConditions = {
+        1:{'conditions':'ONE (Sea Level)','fault_modes':'ONE (HPC Degradation)'},
+        2:{'conditions':'SIX',            'fault_modes':'ONE (HPC Degradation)'},
+        3:{'conditions':'ONE (Sea Level)','fault_modes':'TWO (HPC Degradation, Fan Degradation)'},
+        4:{'conditions':'SIX',            'fault_modes':'TWO (HPC Degradation, Fan Degradation)'},
+    }
+
     ### load the file labelled "train_FD..."
     dfTrain = list()
     engineID_max = 0
     for i in range(1,5):
+        # read the file
         dataFile = 'train_FD{:03d}.txt'.format(i)
         print('reading and processing file {}'.format(dataFile))
         df = pd.read_csv(os.path.join(dataDir,dataFile),delimiter=' ',header=None)
         df.drop(df.columns[[26, 27]],axis=1,inplace=True)
         df.columns = columns
+
         # add the source file and the orginial id
         df['source'] = dataFile
         df['org_id'] = df['id']
+
+        # add operation conditions
+        for k,v in opConditions[i].items():
+            df[k] = v
+
         # the engine id (column 'id') restart at 1 in each file. So when we assemble 
         # the files we have a problem. let's fix that
         df['id'] = df['id']+engineID_max
         engineID_max = df.iloc[-1]['id']
         # print('   min engine ID: {}'.format(df.iloc[0]['id']))
         # print('   max engine ID: {}'.format(df.iloc[-1]['id']))
+
+
         # append
         dfTrain.append(df)
         
@@ -166,6 +186,10 @@ def readPrepareDataset(dataDir):
         # add the source file and the orginial id
         df['source'] = dataFile
         df['org_id'] = df['id']
+
+        # add operation conditions
+        for k,v in opConditions[i].items():
+            df[k] = v
         
         # Load the ground truth RUL values
         rulFile = 'RUL_FD{:03d}.txt'.format(i)
