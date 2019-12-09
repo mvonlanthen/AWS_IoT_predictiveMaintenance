@@ -200,7 +200,9 @@ def readPrepareDataset(dataDir):
     dfTest['fail'] = 0
     dfTest.loc[dfTest['RUL']==0,'fail'] = 1
 
-    ### return dfTrain and dfTest into one big DataFrame
+    # concatenate dfTrain and dfTest, then return
+    trainMaxId = dfTrain['id'].max()
+    dfTest['id'] = dfTest['id']+trainMaxId
     return pd.concat([dfTrain,dfTest])
 
 
