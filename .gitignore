@@ -4,6 +4,9 @@
 # IDE
 .vscode
 
+# python stuffs
+*.pyc
+
 # data files
 *.csv
 *.h5

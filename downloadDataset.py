@@ -5,12 +5,25 @@ Download, unzip and prepare the "Turbofan engine degradation simulation dataset"
 into one csv file. 
 
 The orignal dataset is splited into 4 batches which are themselves splitted into 
-train and test sets. Moreover, the ground truth for the test sets are in 
-seperated files. To make the manipulation of the dataset a bit easier, this 
-script concatenates all these files into one csv.
+train and test sets. Each batch represent a different operating condition. Moreover, 
+the ground truth for the test sets are in seperated files. To make the manipulation 
+of the dataset a bit easier, this script concatenates all these files into one 
+csv. Extra columns are added to with information such as the source (i.e. which 
+file), the operating condition, the Remaining Useful Life (RUL).
 
 More info about this dataset are available here 
 "https://data.nasa.gov/dataset/Turbofan-engine-degradation-simulation-data-set/vrks-gjie"
+
+Notes
+-----
+* In the dataset current form (Dec 2019), the sensor names are not given. 
+  Nevertheless, these names were given in previous versions. So with the help of 
+  a MATLAB tutorial based on the same dataset, but at a previous version, the 
+  true names of the sensors were reversed-engineered. The reversed-engineered 
+  was done by comparing similar plots and the range of values taken by each 
+  sensor. The sensor with unknown true name are labeled si.The MATLAB tutorial 
+  is available here: 
+  https://in.mathworks.com/matlabcentral/mlc-downloads/downloads/submissions/63012/versions/4/previews/PredictiveMaintenanceDemo_r1/html/Demo0_PreProcessing.html
 
 Usage
 -----
@@ -116,6 +129,31 @@ def readPrepareDataset(dataDir):
         's11','s12', 's13', 's14','s15', 's16', 's17', 's18', 's19', 's20', 
         's21'
     ]
+
+    # reverse-engineered  column names
+    trueSensorNames = {
+        's1':'s1',
+        's2':'LPCOutletTemp',
+        's3':'HPCOutletTemp',
+        's4':'LPTOutletTemp',
+        's5':'s5',
+        's6':'s6',
+        's7':'TotalHPCOutletPres',
+        's8':'PhysFanSpeed',
+        's9':'PhysCoreSpeed',
+        's10':'s10',
+        's11':'StaticHPCOutletPres',
+        's12':'FuelFlowRatio',
+        's13':'corrFanSpeed',
+        's14':'coorCoreSpeed',
+        's15':'BypassRatio',
+        's16':'s16',
+        's17':'BleedEntropy',
+        's18':'s18',
+        's19':'s19',
+        's20':'HPTCoolantBleed',
+        's21':'LPTCoolantBleed',
+    }
 
     # operation condition. Each batch (e.g. train_FD001.txt and test_FD001.txt 
     # is one batch) represents a similar fleet of engine running at similar 
@@ -224,10 +262,15 @@ def readPrepareDataset(dataDir):
     dfTest['fail'] = 0
     dfTest.loc[dfTest['RUL']==0,'fail'] = 1
 
-    # concatenate dfTrain and dfTest, then return
+    # concatenate dfTrain and dfTest
     trainMaxId = dfTrain['id'].max()
     dfTest['id'] = dfTest['id']+trainMaxId
-    return pd.concat([dfTrain,dfTest])
+    dfAll = pd.concat([dfTrain,dfTest])
+
+    # update the sensor name with their true names
+    dfAll.rename(trueSensorNames,axis=1,inplace=True)
+
+    return dfAll
 
 
 def writeDataset(df,targetFile,shuffle=True):
